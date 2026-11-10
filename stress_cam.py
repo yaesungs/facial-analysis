@@ -357,7 +357,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     live.add_argument("--baseline", action="store_true", help="ignore your personal model and calibrate instead")
     live.add_argument("--calibration", type=float, default=20.0, help="calibration length in seconds (default 20)")
     live.add_argument("--sensitivity", type=float, default=0.4, help="how strongly the baseline score reacts (default 0.4)")
-    live.add_argument("--smoothing", type=float, default=1.0, help="seconds of smoothing on the output (default 1)")
+    live.add_argument("--smoothing", type=float, default=0.0,
+                      help="extra smoothing of the output in seconds (default 0 = react instantly)")
     live.add_argument("--udp", default="127.0.0.1:5005", help="host:port to send stress values to, or 'off'")
     record = commands.add_parser("record", parents=[common], help="record a labeled session for training")
     record.add_argument("label", choices=LABELS)

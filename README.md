@@ -109,13 +109,43 @@ python game_receiver_example.py
 | head movement, leaning in | landmark positions | fidgeting, tension |
 | heart rate (beta) | tiny color changes of the cheeks (rPPG) | rises under stress |
 
-**Baseline score (no training):** each signal is averaged over 2 s and compared with
-your calibration. Only changes beyond your normal range count. They are weighted
-(`WEIGHTS` in `stress_model.py`) and mapped to 0–1. Blink rate is left out here because
-its direction differs between people and situations.
+### What the percentage means
 
-**Personal model:** logistic regression on all signals, trained on your recordings. It
-outputs the probability that you are in your "stressed" state.
+**Baseline score (no training).** The 20 s calibration records your relaxed average for
+each signal and how much it naturally wiggles (its standard deviation, with a minimum
+so a very still calibration doesn't make it oversensitive). After that, every frame:
+
+1. Each signal, averaged over the last half second, is measured in "wiggles" away from
+   your relaxed average.
+2. The first wiggle is ignored, so normal fidgeting doesn't count. Anything beyond it,
+   capped at 4, is multiplied by the signal's weight and added up as points. Weights are
+   in `WEIGHTS` in `stress_model.py`: furrowed brow 1.0, pressed lips 0.7, worried brow
+   and mouth corners down 0.4, most others 0.2–0.3, smiling −0.6.
+3. Points become the percentage: `stress = 1 − e^(−0.4 × points)`, where 0.4 is
+   `--sensitivity`.
+
+| Points | Stress | Label | Example |
+|---|---|---|---|
+| 0 | 0% | calm | face looks like your calibration |
+| 1 | 33% | calm | brow furrowed 2 wiggles past your normal |
+| 2 | 55% | tense | brow furrowed 3 wiggles past your normal |
+| 4 | 80% | stressed | brow furrowed 5 or more wiggles past your normal |
+| 6 | 91% | stressed | strong brow furrow plus pressed lips |
+
+Under 35% is labeled calm, 35–65% tense, above 65% stressed. So the percentage is not a
+probability or a medical measure: it is how far your face has moved from your own
+relaxed face, in the directions linked to stress. The weights are starting guesses
+based on stress research, not tuned on real players yet. Blink rate is left out because
+its direction differs between people (up with anxiety, down with intense focus).
+
+**Personal model.** The percentage is the model's probability that the last half second
+looks like your "stressed" recordings rather than your "calm" ones. 50% means it can't
+tell.
+
+**Speed.** Facial signals show up in the score within about a quarter of a second. Blink
+rate and heart rate are rates, so they need 10–30 s of data and change slowly. The value
+is sent without smoothing. If a game mechanic needs a steadier value, smooth it in the
+game, or start the detector with `--smoothing 1` (seconds).
 
 ## Limitations
 

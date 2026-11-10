@@ -114,7 +114,9 @@ class FeatureExtractor:
     heart_rate   webcam pulse in bpm from pulse.PulseEstimator, NaN when unreliable
     """
 
-    def __init__(self, window: float = 2.0, blink_window: float = 30.0, pulse=None):
+    # window 0.5 s: quick enough for live gameplay, long enough to average out the
+    # frame-to-frame jitter of the landmarks.
+    def __init__(self, window: float = 0.5, blink_window: float = 30.0, pulse=None):
         self.window = window
         self.blink_window = blink_window
         self.pulse = pulse

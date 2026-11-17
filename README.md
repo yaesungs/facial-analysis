@@ -44,8 +44,10 @@ python stress_cam.py
 - Then you get a live stress % (calm / tense / stressed), what caused it ("furrowed
   brow, pressed lips"), your blink rate, and an experimental webcam heart rate.
 - Keys: `q` quit, `c` recalibrate, `d` show every feature.
-- Options: `--camera 1` (another webcam), `--no-window` (console only, e.g. while a game
-  runs full screen), `--sensitivity 0.6` (react more), `--no-pulse`, `--video clip.mp4`.
+- Options: `--camera 1` (another webcam; set the environment variable `STRESS_CAMERA=1`
+  to make it your default, e.g. on a Mac where camera 0 is the iPhone), `--no-window`
+  (console only, e.g. while a game runs full screen), `--sensitivity 0.6` (react more),
+  `--no-pulse`, `--video clip.mp4`.
   `python stress_cam.py run -h` lists them all.
 
 ## 2. Train your personal model (recommended)

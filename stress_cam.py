@@ -6,15 +6,13 @@
   python stress_cam.py train            train your personal model on the recordings
 
 While running, the stress level is sent as JSON over UDP (127.0.0.1:5005 by
-default) so a game in any engine can react to it; see game_receiver_example.py.
+default) so a game in any engine can react to it; the message format is in API.md.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import math
-import socket
 import sys
 import time
 from collections import deque
@@ -25,7 +23,8 @@ import numpy as np
 
 from face_features import FaceDetector, FeatureExtractor, ensure_model
 from pulse import PulseEstimator
-from stress_model import LABELS, READABLE, BaselineScorer, PersonalModel, Recorder, Smoother, level, train
+from stress_api import StressSender, level
+from stress_model import LABELS, READABLE, BaselineScorer, PersonalModel, Recorder, Smoother, train
 
 HERE = Path(__file__).resolve().parent
 FACE_MODEL = HERE / "models" / "face_landmarker.task"
@@ -61,7 +60,7 @@ class StressApp:
                 print(f"Calibrating for {args.calibration:.0f} s: relax and look at the screen like you normally do.")
             self.smoother = Smoother(args.smoothing)
             if args.udp != "off":
-                self.udp = UdpSender(args.udp)
+                self.udp = StressSender(args.udp)
                 print(f"Sending stress values to udp://{args.udp}")
 
         self.t, self.face, self.feats = 0.0, None, None
@@ -136,6 +135,7 @@ class StressApp:
             return None if math.isnan(value) else round(value, 1)
 
         return {
+            "source": "face",
             "stress": None if self.stress is None else round(self.stress, 3),
             "level": None if self.stress is None else level(self.stress),
             "face": self.face is not None,
@@ -255,25 +255,6 @@ class StressApp:
         if len(points) > 1:
             cv2.polylines(img, [np.array(points, np.int32)], False, WHITE, 1, cv2.LINE_AA)
         put(img, f"stress, last {HISTORY_SECONDS} s", (x0 + 6, y0 + 14), 0.4, GRAY)
-
-
-class UdpSender:
-    """Sends JSON messages to a game over UDP, at most `rate` times per second."""
-
-    def __init__(self, address: str, rate: float = 20.0):
-        host, port = address.rsplit(":", 1)
-        self.target = (host, int(port))
-        self.interval, self._last = 1.0 / rate, -math.inf
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    def send(self, t: float, message: dict) -> None:
-        if t - self._last < self.interval:
-            return
-        self._last = t
-        try:
-            self._sock.sendto(json.dumps(message).encode(), self.target)
-        except OSError:
-            pass  # nobody is listening yet; that's fine
 
 
 def frames(args: argparse.Namespace):

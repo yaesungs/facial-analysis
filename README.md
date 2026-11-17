@@ -82,17 +82,29 @@ Getting good data:
 
 ## 3. Use it in a game
 
-While running, up to 20 JSON messages per second go to UDP `127.0.0.1:5005`:
+The detector and the game stay separate programs. While running, the detector sends up
+to 20 JSON messages per second over UDP to `127.0.0.1:5005`, and the game listens. The
+message format and the rules for game code are in [API.md](API.md).
 
-```json
-{"stress": 0.63, "level": "tense", "face": true, "calibrating": false,
- "heart_rate": 74.0, "blink_rate": 12.0, "time": 81.4}
+In a Python/pygame game, `stress_api.StressClient` handles it:
+
+```python
+from stress_api import StressClient
+
+stress = StressClient()
+# once per frame:
+stress.update()
+jump = 1.0 + 0.5 * stress.value   # 0.0 calm .. 1.0 stressed
 ```
 
-`stress` is `null` while calibrating. `face` is `false` when the player looks away (the
-last stress value is kept). Any engine can read UDP (Unity `UdpClient`, Godot
-`PacketPeerUDP`, Python `socket`). To see it work, run this in a second terminal while
-the detector runs:
+To build the game without a webcam, run the simulator. It sends the same messages, and
+you set the stress with a slider:
+
+```bash
+python stress_simulator.py
+```
+
+To watch the values arrive, run this in a second terminal:
 
 ```bash
 python game_receiver_example.py
@@ -163,6 +175,9 @@ game, or start the detector with `--smoothing 1` (seconds).
 | `face_features.py` | MediaPipe face landmarks → features (expressions, blinks, head motion) |
 | `pulse.py` | experimental webcam heart rate |
 | `stress_model.py` | baseline score, personal ML model, training |
+| `stress_api.py` | the API: `StressSender` (detector side), `StressClient` (game side) |
+| `API.md` | the message format both sides agree on |
+| `stress_simulator.py` | fake detector with a slider, for building the game without a webcam |
 | `game_receiver_example.py` | how a game reads the stress value |
 
 `models/` and `recordings/` are created on first use and are git-ignored, because

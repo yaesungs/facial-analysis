@@ -61,10 +61,6 @@ WEIGHTS = {
 MIN_STD = {"blink_rate": 3.0, "head_motion": 0.05, "face_size": 0.01, "heart_rate": 4.0}
 
 
-def level(stress: float) -> str:
-    return "calm" if stress < 0.35 else "tense" if stress < 0.65 else "stressed"
-
-
 class BaselineScorer:
     """No training needed: compares you with your own relaxed baseline."""
 

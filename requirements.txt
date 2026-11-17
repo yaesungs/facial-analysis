@@ -2,3 +2,4 @@ mediapipe>=0.10.14   # face landmarks + blendshapes (also installs OpenCV)
 scikit-learn>=1.2    # personal model
 scipy                # heart-rate filter
 numpy
+brainflow            # Muse 2 EEG over Bluetooth (muse_eeg.py)

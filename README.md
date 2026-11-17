@@ -179,13 +179,38 @@ game, or start the detector with `--smoothing 1` (seconds).
 | `API.md` | the message format both sides agree on |
 | `stress_simulator.py` | fake detector with a slider, for building the game without a webcam |
 | `game_receiver_example.py` | how a game reads the stress value |
+| `muse_eeg.py` | separate live viewer for the Muse 2 EEG headband |
 
 `models/` and `recordings/` are created on first use and are git-ignored, because
 recordings are personal data.
 
-## Adding the Muse 2 later
+## Muse 2 EEG viewer
 
-Stream the Muse with `muselsl` (or the Mind Monitor app over OSC), compute band powers
-(alpha, beta, theta per channel) every second, and add them to the feature dict in
-`FeatureExtractor.features()`. Recording and training work unchanged, and the personal
-model then learns from face and brain signals together.
+`muse_eeg.py` connects to a Muse 2 over Bluetooth (through BrainFlow) and shows it in its
+own window, separate from the webcam detector:
+
+```bash
+python muse_eeg.py
+```
+
+Before starting: charge and turn on the Muse, put it on, and close the Muse app on your
+phone (the headband only talks to one device at a time). No pairing in Windows settings
+is needed. With several headbands around, pick one with `--name Muse-XXXX`. Without a
+headband, `--synthetic` uses a simulated one.
+
+- **Traces:** the four electrodes, TP9 (left ear), AF7 (left forehead), AF8 (right
+  forehead) and TP10 (right ear), filtered to 1–45 Hz with power-line hum removed.
+- **Contact:** good / fair / poor per electrode, from how noisy its signal is. Brain
+  signals are about 5–30 µV; a loose sensor or hair gives hundreds. Poor sensors are
+  left out of the numbers below.
+- **Brainwave bands:** the share of signal power in delta, theta, alpha, beta and gamma
+  over the last 2 s. Quick check: close your eyes and alpha should rise.
+- **EEG stress:** the ratio beta / (alpha + theta), which rises with mental effort and
+  arousal, compared with a 20 s relaxed calibration and turned into 0–100% the same way
+  as the face score. Frowning and jaw clenching add muscle noise to beta, so they push it
+  up too. Needs at least 2 sensors with good contact.
+
+The values go out as JSON over UDP to `127.0.0.1:5006` (`"source": "eeg"`), next to the
+face detector's 5005, so a game can read both. Combining face and EEG into one model is
+the next step: add the band powers to the feature dict in `FeatureExtractor.features()`,
+then record and train as usual.
